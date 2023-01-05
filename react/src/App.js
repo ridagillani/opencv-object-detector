@@ -1,7 +1,8 @@
 import './App.css';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from './Home';
-import Video from './Video';
+import Home from './components/Home';
+import Video from './components/Video';
+
 function App() {
   return (
     

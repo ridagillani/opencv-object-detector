@@ -1,12 +1,13 @@
 from flask import Flask, Response , request, send_file
 from flask_cors import CORS
+from camera import Camera
+import cv2
+import base64
+import numpy as np
+
 app = Flask(__name__)
 CORS(app)
-import cv2
-app = Flask(__name__)
-
-
-
+# app = Flask(__name__)
 
 def detect():
     thres = 0.45  # Threshold to detect object
@@ -44,9 +45,7 @@ def detect():
                 cv2.putText(img, str(round(confidence * 100, 2)), (box[0] + 300, box[1] + 30),
                             cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
-        # cv2.imshow('Output', img)
-        #
-        # cv2.waitKey(1)
+      
         ret, buffer = cv2.imencode('.jpg', img)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
@@ -62,14 +61,17 @@ def objectdetect():
 def hello_world():  # put application's code here
     return 'Hello World!'
 
-@app.route('/objectimage')
+@app.route('/objectimage', methods=["POST"])
 def objectImage():
-    image = request.files['image']
-    img = cv2.imread(image)
+    raw = request.json["image"]
+    encoded = raw.split(',')[1]
+    np_data = np.frombuffer(base64.b64decode(encoded), np.uint8)
+    img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+    # img = cv2.imread(image)
     classFile = 'coco.names'
     with open(classFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
-    print(classNames)
+
 
     configPath = 'ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt'
     weightsPath = 'frozen_inference_graph.pb'
@@ -79,6 +81,7 @@ def objectImage():
     net.setInputScale(1.0 / 127.5)
     net.setInputMean((127.5, 127.5, 127.5))
     net.setInputSwapRB(True)
+
     classIds, confs, bbox = net.detect(img, confThreshold=0.5)
     for classId, confidence, box in zip(classIds.flatten(), confs.flatten(), bbox):
         cv2.rectangle(img, box, color=(0, 255, 0), thickness=2)
@@ -86,9 +89,14 @@ def objectImage():
                     cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(img, str(round(confidence * 100, 2)), (box[0] + 300, box[1] + 30),
                     cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-    return send_file(img, as_attachment=True)
+
+    buf = cv2.imencode(".jpg", img)[1]
+    image = base64.b64encode(buf)
+
+    return  image
+    # return send_file(img, as_attachment=True, download_name="image")
 
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000)
