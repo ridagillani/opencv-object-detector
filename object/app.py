@@ -7,7 +7,6 @@ import numpy as np
 
 app = Flask(__name__)
 CORS(app)
-# app = Flask(__name__)
 
 def detect():
     thres = 0.45  # Threshold to detect object
@@ -21,7 +20,6 @@ def detect():
     classFile = 'coco.names'
     with open(classFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
-    print(classNames)
 
     configPath = 'ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt'
     weightsPath = 'frozen_inference_graph.pb'
@@ -35,7 +33,7 @@ def detect():
     while True:
         success, img = cap.read()
         classIds, confs, bbox = net.detect(img, confThreshold=thres)
-        print(classIds, bbox)
+    
 
         if len(classIds) != 0:
             for classId, confidence, box in zip(classIds.flatten(), confs.flatten(), bbox):
@@ -94,9 +92,6 @@ def objectImage():
     image = base64.b64encode(buf)
 
     return  image
-    # return send_file(img, as_attachment=True, download_name="image")
-
-
 
 if __name__ == '__main__':
     app.run(port=5000)

@@ -20,7 +20,7 @@ export default function Home() {
     reader.readAsDataURL(file);
     reader.onload = () => {
       axios
-        .post("http://localhost:5000/objectdetect", { image: reader.result })
+        .post("http://localhost:5000/objectimage", { image: reader.result })
         .then((res) => {
           setImageURL(`data:image/jpeg;base64,${res.data}`);
           setShow(true);
